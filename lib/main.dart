@@ -58,7 +58,6 @@ class _MyAppState extends State<MyApp> {
         '/register' : (context) => RegisterScreen(),
         '/home' : (context) => HomeScreen(),
       },
-
     );
   }
 }
