@@ -1,4 +1,5 @@
 import 'package:diamanteblockchain/constants.dart';
+import 'package:diamanteblockchain/screens/connect_screen.dart';
 import 'package:diamanteblockchain/screens/home_screen.dart';
 import 'package:diamanteblockchain/screens/login_screen.dart';
 import 'package:diamanteblockchain/screens/register_screen.dart';
@@ -49,13 +50,15 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
+        fontFamily: 'Baloo',
         floatingActionButtonTheme: FloatingActionButtonThemeData(backgroundColor: kPrimaryColor)
       ),
-      initialRoute: auth!.currentUser == null ? '/home' : '/home',
+      initialRoute: auth!.currentUser == null ? '/connect' : '/home',
       routes: {
         '/login' : (context) => LoginScreen(),
         '/register' : (context) => RegisterScreen(),
         '/home' : (context) => HomeScreen(),
+        '/connect' : (context) => ConnectScreen(),
       },
     );
   }

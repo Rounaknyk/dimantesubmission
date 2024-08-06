@@ -8,6 +8,7 @@ import 'package:diamanteblockchain/custom/icon_textfield.dart';
 import 'package:diamanteblockchain/models/user_model.dart';
 import 'package:diamanteblockchain/services/create_account.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:js' as js;
 
@@ -24,48 +25,46 @@ class _HomeScreenState extends State<HomeScreen> {
   var pKey;
 
   void checkDiamExtension() {
+    if (js.context.hasProperty('diam')) {
+      print("Diam extension is installed!");
 
-      if (js.context.hasProperty('diam')) {
-        print("Diam extension is installed!");
+      try {
+        var connectResult = js.context['diam'].callMethod('connect');
 
-        try {
-          var connectResult = js.context['diam'].callMethod('connect');
-
-          if (connectResult is js.JsObject && connectResult.hasProperty('then')) {
-            // If it's a Promise-like object
-            connectResult.callMethod('then', [
-                  (result) {
-
+        if (connectResult is js.JsObject && connectResult.hasProperty('then')) {
+          // If it's a Promise-like object
+          connectResult.callMethod('then', [
+            (result) {
               setState(() {
                 pKey = result['message'][0];
               });
               print(pKey);
-                Alert(context: context).alert(result as js.JsObject);
-              }
-            ]).callMethod('catch', [
-                  (error) {
-                print('Error: $error');
-              }
-            ]);
-          } else {
-            // If it's not a Promise-like object, assume it's the result directly
-            print('User active public key is: ${connectResult['message'][0]}');
-          }
-        } catch (e) {
-          print('Error connecting to Diam: $e');
+              Alert(context: context).alert(result as js.JsObject);
+            }
+          ]).callMethod('catch', [
+            (error) {
+              print('Error: $error');
+            }
+          ]);
+        } else {
+          // If it's not a Promise-like object, assume it's the result directly
+          print('User active public key is: ${connectResult['message'][0]}');
         }
-      } else {
-        print("Diam extension is not installed.");
+      } catch (e) {
+        print('Error connecting to Diam: $e');
       }
+    } else {
+      print("Diam extension is not installed.");
+    }
   }
 
   Future<void> connectDiam() async {
     if (js.context.hasProperty('diam')) {
       try {
-        final result = await promiseToFuture(js.context['diam'].callMethod('connect'));
+        final result =
+            await promiseToFuture(js.context['diam'].callMethod('connect'));
         print("Result ${result.runtimeType}");
         if (result != null) {
-
           if (result is Map) {
             if (result.containsKey('message')) {
               final message = result['message'];
@@ -73,14 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 final publicKey = message[0];
                 print(publicKey);
                 pKey = message[0];
-                setState(() {
-
-                });
+                setState(() {});
               } else {
                 print('Unexpected message structure: $message');
               }
             } else {
-              print('Result does not contain "message" key. Keys: ${result.keys.toList()}');
+              print(
+                  'Result does not contain "message" key. Keys: ${result.keys.toList()}');
             }
           } else {
             print('Result is not a Map. Type: ${result.runtimeType}');
@@ -95,7 +93,6 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Diam extension is not installed.');
     }
   }
-
 
   // Future<void> connectDiam() async {
   //   if (js.context.hasProperty('diam')) {
@@ -158,7 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final completer = Completer<dynamic>();
     final success = js.allowInterop((result) => completer.complete(result));
     final error = js.allowInterop((e) => completer.completeError(e));
-    js.context['Promise'].callMethod('resolve', [jsPromise]).callMethod('then', [success, error]);
+    js.context['Promise'].callMethod('resolve', [jsPromise]).callMethod(
+        'then', [success, error]);
     return completer.future;
   }
 
@@ -190,26 +188,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void signTransaction() async {
     // if (js.context.hasProperty('diam')) {
-      // final transactionXdr;
-      try {
-        final transactionXdr = await CreateAccount(context).getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
-        print(transactionXdr);
-        final shouldSubmit = true;
-        final network = "Diamante Testnet";
+    // final transactionXdr;
+    try {
+      final transactionXdr = await CreateAccount(context)
+          .getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
+      print(transactionXdr);
+      final shouldSubmit = true;
+      final network = "Diamante Testnet";
 
-        // js.context['diam'].callMethod('sign', [
-        //   transactionXdr,
-        //   shouldSubmit,
-        //   network
-        // ]).then((result) {
-        //   print('Signature result: $result');
-        // }).catchError((error) {
-        //   print('Error signing transaction: $error');
-        // });
-      }catch(e){
-        print("TRANS ${e}");
-      }
-      // final transactionXdr = "AAAAAgAAAADD9u0l8B7fMgvRITQuplXFfTskVrNgTgyBN1heDfkLEAAAAGQApCseAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAADId5UakWjIgj3XsdYXl/8mJKTpUSUIu8F3IcB7cKoQ1wAAAAAAAAAAAExLQAAAAAAAAAAA";
+      // js.context['diam'].callMethod('sign', [
+      //   transactionXdr,
+      //   shouldSubmit,
+      //   network
+      // ]).then((result) {
+      //   print('Signature result: $result');
+      // }).catchError((error) {
+      //   print('Error signing transaction: $error');
+      // });
+    } catch (e) {
+      print("TRANS ${e}");
+    }
+    // final transactionXdr = "AAAAAgAAAADD9u0l8B7fMgvRITQuplXFfTskVrNgTgyBN1heDfkLEAAAAGQApCseAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAADId5UakWjIgj3XsdYXl/8mJKTpUSUIu8F3IcB7cKoQ1wAAAAAAAAAAAExLQAAAAAAAAAAA";
 
     // } else {
     //   print("Diam extension is not installed.");
@@ -229,18 +228,119 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(onPressed: ()async{
-        final transactionXdr = await CreateAccount(context).getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
-        // checkDiamExtension();
-      }, child: Icon(Icons.add, color: Colors.white,),),
-      appBar: AppBar(title: Text('$kName'), backgroundColor: kPrimaryColor, centerTitle: false,),
+      // floatingActionButton: FloatingActionButton(onPressed: ()async{
+      //   final transactionXdr = await CreateAccount(context).getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
+      //   // checkDiamExtension();
+      // }, child: Icon(Icons.add, color: Colors.white,),),
+      appBar: AppBar(
+        title: Text(
+          '$kName',
+          style: TextStyle(fontSize: 32),
+        ),
+        centerTitle: false,
+        automaticallyImplyLeading: false,
+        leading: LottieBuilder.asset('animations/infinity.json'),
+        actions: [
+          RichText(text: TextSpan(
+              style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 24, fontFamily: 'Baloo'),
+              children: [
+                TextSpan(text: 'Balance: ', style: TextStyle(color: Colors.black, )),
+                TextSpan(text: '\$1000', ),
+              ]
+          )),
+          SizedBox(width: 16.0,),
+        ],
+      ),
       body: Center(
         child: SafeArea(
-          child: Center(
-            child: InkWell(child: Text('SIGN'), onTap: (){
-              signTransaction();
-            },),
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                height: double.infinity,
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: EdgeInsets.all(8.0),
+                          height: 200,
+                          width: 200,
+                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+                          child: Column(
+                            children: [
+                              Text('Account 1', style: TextStyle(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
+                              SizedBox(height: 8.0,),
+                              Text('This is your address'),
+                              SizedBox(height: 8.0,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.copy, color: kGrey, size: 14,),
+                                  SizedBox(width: 4.0,),
+                                  Text('Copy', style: TextStyle(color: Colors.grey),)
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: InkWell(
+                  onTap: (){
+
+                  },
+                  child: Material(
+                    borderRadius: BorderRadius.circular(12),
+                    elevation: 4,
+                    child: Container(
+                      height: 50,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.add,
+                              color: Colors.white,
+                            ),
+                            SizedBox(
+                              width: 8.0,
+                            ),
+                            Text(
+                              'Add Account',
+                              style: TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.bold),
+                            )
+                          ],
+                        ),
+                      ),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: kPrimaryColor),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+          // child: Center(
+          //   child: InkWell(child: Text('SIGN'), onTap: (){
+          //     signTransaction();
+          //   },),
+          // ),
         ),
       ),
     );

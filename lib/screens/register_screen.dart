@@ -28,6 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       FirebaseAuth auth = FirebaseAuth.instance;
       await auth.createUserWithEmailAndPassword(email: email, password: pass);
+      await auth.currentUser!.updateDisplayName(name);
       print('done');
       Alert(context: context).msg('Registered!');
       setState(() {

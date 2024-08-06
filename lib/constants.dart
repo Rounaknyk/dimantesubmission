@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 final kPrimaryColour = Colors.blue;
-final kName = 'Diam Fund';
+final kName = 'DiamFund';
 final sourceMarker = Icon(Icons.location_on, color: Colors.red, size: 50);
 final destinationMarker = Icon(Icons.location_on, color: Colors.black, size: 50);
 final driverMarker = Icon(Icons.location_on_rounded, color: Colors.green, size: 50);
