@@ -40,7 +40,6 @@ class _MyAppState extends State<MyApp> {
     // TODO: implement initState
     super.initState();
     print(auth!.currentUser);
-
   }
   // This widget is the root of your application.
   @override

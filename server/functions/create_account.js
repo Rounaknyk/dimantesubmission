@@ -90,6 +90,7 @@ async function getTrx(res, key){
 }
 
 accRouter.post('/trx', async (req, res) => {
+  console.log("HELLO!");
   const {key} = req.body;
   console.log(key);
   await getTrx(res, key);
