@@ -2,6 +2,98 @@ const express = require('express');
 var DiamSdk = require("diamante-sdk-js");
 var fetch = require("node-fetch");
 const accRouter = express.Router();
+const { Asset } = require('diamante-sdk-js');
+const {TransactionBuilder} = require('diamante-sdk-js');
+const {Keypair} = require('diamante-sdk-js');
+const {BASE_FEE} = require('diamante-sdk-js');
+const {Operation} = require('diamante-sdk-js');
+
+async function assetMinter(asset_name, distributor, recevier) {
+    try {
+        var server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io");
+
+        const account = await server.loadAccount("GD57QPEMR5ITCIAGA3PGIU4TU7CQPCHXQ7UAWTHGLDJDL5KPH3KEQA7J");
+        const asset = new Asset(
+            "HH",
+            "GD57QPEMR5ITCIAGA3PGIU4TU7CQPCHXQ7UAWTHGLDJDL5KPH3KEQA7J"
+        );
+
+        const transaction = new TransactionBuilder(account, {
+            fee: BASE_FEE,
+            networkPassphrase: "Diamante Testnet",
+        })
+            .addOperation(
+                Operation.payment({
+                    destination: "GBMW4OURLY5J6PFU7VBLBC2LSSX3CE377MN2QVSR76CWIZMLAHGVNCQJ",
+                    asset,
+                    amount: "30",
+                })
+            )
+            .setTimeout(100)
+            .build();
+
+        transaction.sign(Keypair.fromSecret("SDZZMINYGBXBP2YWNRFBYSFOJYSCB2EB2FHK27X3GCLMMWITYL3D6I6W"));
+        const result = await server.submitTransaction(transaction);
+        if (result.successful === true) {
+            console.log("###################################")
+
+            console.log()
+            console.log("Asset ", asset.code, " distributed  to ", "GBMW4OURLY5J6PFU7VBLBC2LSSX3CE377MN2QVSR76CWIZMLAHGVNCQJ")
+            console.log("Transaction hash: ", result.hash)
+
+            console.log()
+
+            console.log("###################################")
+
+        }
+    } catch (e) {
+        console.log(e);
+
+    }
+}
+
+async function getTrx(res, key){
+  var parentKey = Buffer.from(key, 'utf8').toString();;
+  try{
+    const pair = DiamSdk.Keypair.random();
+
+    var server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io");
+
+    var parentAccount = await server.loadAccount(parentKey); //make sure the parent account exists on ledger
+    console.log(parentAccount);
+    var createAccountTx = new DiamSdk.TransactionBuilder(parentAccount, {
+      fee: DiamSdk.BASE_FEE,
+      networkPassphrase: DiamSdk.Networks.TESTNET,
+    });
+
+    const pairPublicKey = pair.publicKey();
+    const pairSecretKey = pair.secret();
+
+    console.log("CHILD KEY "+pairPublicKey);
+    
+  var createAccountTx = await createAccountTx
+      .addOperation(
+        DiamSdk.Operation.createAccount({
+          destination: pairPublicKey,
+          startingBalance: "2.01",
+        })
+      )
+      .setTimeout(0)
+      .build();
+
+      res.json({'text' : createAccountTx.toEnvelope().toXDR('base64')});
+
+  }catch(e){
+    res.json(e);
+    console.log(e);
+  }
+}
+
+accRouter.post('/trx', async (req, res) => {
+  const {key} = req.body;
+  console.log(key);
+  await getTrx(res, key);
+});
 
 async function createAccount(res){
 
@@ -74,7 +166,8 @@ async function createAccount(res){
 
 accRouter.post('/create-account', async (req, res) => {
     try{
-        await createAccount(res);
+    //await assetMinter('HH', 'GD57QPEMR5ITCIAGA3PGIU4TU7CQPCHXQ7UAWTHGLDJDL5KPH3KEQA7J', 'GBMW4OURLY5J6PFU7VBLBC2LSSX3CE377MN2QVSR76CWIZMLAHGVNCQJ');
+      await createAccount(res);
     }catch(e){
         console.log(e);
         return res.status(500).json({"error" : `Server error ${e}`});

@@ -4,6 +4,7 @@ const express = require('express');
 const accRouter = require('./functions/create_account');
 const paymentRouter = require('./functions/send_payment');
 const dataRouter = require('./functions/manage_data');
+const assetMinter = require('./functions/asset_minter');
 const app = express();
 
 //middlewares
@@ -11,10 +12,11 @@ app.use(express.json());
 app.use(accRouter);
 app.use(paymentRouter);
 app.use(dataRouter);
+app.use(assetMinter);
 // create a completely new and unique pair of keys
 
 const port = 3000;
-const serverIp = '0.0.0.0';
+const serverIp = '192.168.102.75';
 //const dbUrl = process.env.dbUrl;
 
 const server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io/");

@@ -1,3 +1,4 @@
+import 'package:diamanteblockchain/constants.dart';
 import 'package:diamanteblockchain/screens/home_screen.dart';
 import 'package:diamanteblockchain/screens/login_screen.dart';
 import 'package:diamanteblockchain/screens/register_screen.dart';
@@ -8,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 
 void main() async {
-
 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -50,9 +50,9 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-
+        floatingActionButtonTheme: FloatingActionButtonThemeData(backgroundColor: kPrimaryColor)
       ),
-      initialRoute: auth!.currentUser == null ? '/login' : '/home',
+      initialRoute: auth!.currentUser == null ? '/home' : '/home',
       routes: {
         '/login' : (context) => LoginScreen(),
         '/register' : (context) => RegisterScreen(),

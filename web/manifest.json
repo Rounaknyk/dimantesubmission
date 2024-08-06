@@ -8,6 +8,10 @@
     "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "permissions": [
+        "http://myapp.appspot.com/*",
+        "http://localhost/*"
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",

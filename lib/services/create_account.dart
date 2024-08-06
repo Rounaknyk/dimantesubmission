@@ -24,4 +24,22 @@ class CreateAccount{
       return null;
     }
   }
+
+  Future<String?> getTrx(String key) async {
+    try{
+      print("reached");
+      http.Response res = await http.post(
+          Uri.parse('$kUrl/trx'), body: jsonEncode({
+        "key" : key
+      },), headers: {"Content-Type": "application/json"});
+
+      // print(jsonDecode(res.body));
+      print(jsonDecode(res.body)['text']);
+      return jsonDecode(res.body)['text'];
+
+    }catch(E){
+      print("Flutter error: $E");
+      return null;
+    }
+  }
 }
