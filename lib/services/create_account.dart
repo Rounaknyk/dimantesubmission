@@ -25,6 +25,39 @@ class CreateAccount{
     }
   }
 
+  Future mint() async {
+    try{
+      http.Response res = await http.post(
+          Uri.parse('$kUrl/mint'), body: jsonEncode({
+      },), headers: {"Content-Type": "application/json"});
+
+      print("BHAI ${jsonDecode(res.body)['text']}");
+      return jsonDecode(res.body)['text'];
+    }catch(E){
+      print("Flutter error: $E");
+      return null;
+    }
+  }
+
+  Future createParentAcc(pKey) async {
+    try{
+      http.Response res = await http.post(
+          Uri.parse('$kUrl/create-parent-account'), body: jsonEncode({
+        "key" : pKey
+      },), headers: {"Content-Type": "application/json"});
+
+      print(jsonDecode(res.body));
+      if(jsonDecode(res.body)['details'].toString().contains("createAccountAlreadyExist"))
+        throw jsonDecode(res.body);
+      return (jsonDecode(res.body));
+    }catch(E){
+      if(E == 'exists')
+        return E;
+      print("Flutter error: $E");
+      return null;
+    }
+  }
+
   Future<String?> getTrx(String key) async {
     try{
       print("reached");

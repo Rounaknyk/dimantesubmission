@@ -40,7 +40,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    print(auth!.currentUser);
+    // print(auth!.currentUser);
   }
   // This widget is the root of your application.
   @override
@@ -57,7 +57,7 @@ class _MyAppState extends State<MyApp> {
       routes: {
         '/login' : (context) => LoginScreen(),
         '/register' : (context) => RegisterScreen(),
-        '/home' : (context) => HomeScreen(),
+        '/home' : (context) => HomeScreen(pKey: '',),
         '/connect' : (context) => ConnectScreen(),
       },
     );

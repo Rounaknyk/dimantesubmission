@@ -1,9 +1,12 @@
 import 'package:diamanteblockchain/custom/custom_button.dart';
 import 'package:diamanteblockchain/screens/home_screen.dart';
+import 'package:diamanteblockchain/services/create_account.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
+import '../class/alert.dart';
 import '../constants.dart';
+import 'dart:js' as js;
 
 class ConnectScreen extends StatefulWidget {
   const ConnectScreen({super.key});
@@ -13,6 +16,51 @@ class ConnectScreen extends StatefulWidget {
 }
 
 class _ConnectScreenState extends State<ConnectScreen> {
+
+  String pKey = '';
+
+  void checkDiamExtension() async {
+    // Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
+
+    // await CreateAccount(context).createParentAcc("GADNO2TVAAEVCHZVTNYUYK5RRLNJSBHRY4HZ3F67GLH7EJI7TRH53RES");
+
+    if (js.context.hasProperty('diam')) {
+      print("Diam extension is installed!");
+      try {
+        var connectResult = js.context['diam'].callMethod('connect');
+
+        if (connectResult is js.JsObject && connectResult.hasProperty('then')) {
+          // If it's a Promise-like object
+          connectResult.callMethod('then', [
+                (result) {
+              setState(() {
+                pKey = result['message'][0];
+              });
+              print(pKey);
+              // Alert(context: context).alert(result as js.JsObject);
+            }
+          ]).callMethod('catch', [
+                (error) {
+              print('Error: $error');
+            }
+          ]);
+          if(pKey != null && pKey.isNotEmpty){
+            await CreateAccount(context).createParentAcc(pKey);
+            Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
+          }
+        } else {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
+
+          // If it's not a Promise-like object, assume it's the result directly
+          print('User active public key is: ${connectResult['message'][0]}');
+        }
+      } catch (e) {
+        print('Error connecting to Diam: $e');
+      }
+    } else {
+      print("Diam extension is not installed.");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +85,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
               Text('Connect your wallet and get started!', style: TextStyle(fontSize: 28, color: Colors.black.withOpacity(0.8), fontWeight: FontWeight.bold),),
               SizedBox(height: 32.0,),
               Container(child: CustomButton(text: 'CONNECT', backgroundColor: kPrimaryColor, onPressed: (){
-                Navigator.pushNamed(context, '/home');
+                // Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
+
+                checkDiamExtension();
+                // func();
               }), width: 100,),
             ],
           ),

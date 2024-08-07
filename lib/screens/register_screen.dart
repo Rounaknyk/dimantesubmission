@@ -34,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         loading = false;
       });
-      Navigator.pushNamed(context, '/home');
+      Navigator.pushNamed(context, '/connect');
     }catch(e){
       setState(() {
         loading = false;
