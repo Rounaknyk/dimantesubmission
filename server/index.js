@@ -8,6 +8,7 @@ const assetMinter = require('./functions/asset_minter');
 const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const DiamanteHDWallet = require('diamante-hd-wallet');
 
 //middlewares
 app.use(cors());
@@ -18,8 +19,29 @@ app.use(dataRouter);
 app.use(assetMinter);
 // create a completely new and unique pair of keys
 
+// Generate a new mnemonic phrase
+
+// Generate a new mnemonic phrase
+// const mnemonic = DiamanteHDWallet.generateMnemonic();
+// console.log('Mnemonic:', mnemonic);
+
+
+// const wallet = DiamanteHDWallet.fromMnemonic(mnemonic);
+
+// // Get the public key and secret for the first account (index 0)
+// const publicKey = wallet.getPublicKey(0);
+// const secret = wallet.getSecret(0);
+
+// const valid = DiamanteHDWallet.fromSeed('later road always ginger material human pyramid veteran normal similar million cave');
+// console.log(valid);
+
+// console.log(publicKey);
+// console.log(secret);
+
 const port = 3000;
 const serverIp = '192.0.0.2';
+
+
 //const dbUrl = process.env.dbUrl;
 
 // const server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io/");

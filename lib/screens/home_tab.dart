@@ -1,4 +1,6 @@
+import 'package:diamanteblockchain/class/firebase_service.dart';
 import 'package:diamanteblockchain/custom/dropdown_textfield.dart';
+import 'package:diamanteblockchain/models/user_model.dart';
 import 'package:diamanteblockchain/services/create_account.dart';
 import 'package:dropdown_textfield/dropdown_textfield.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +24,7 @@ class _HomeTabState extends State<HomeTab> {
     showDialog(
         context: context,
         builder: (context) {
+
           return Material(
             color: Colors.transparent,
             child: Center(
@@ -158,6 +161,7 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   showSendAssetDialog(Size size) async {
+
     showDialog(
         context: context,
         builder: (context) {
@@ -191,10 +195,10 @@ class _HomeTabState extends State<HomeTab> {
                         Container(
                           height: 50,
                           width: double.infinity,
-                          child: TextDropdown(title: 'Enter username', list: [
-                            DropDownValueModel(name: 'Dummy', value: 'GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7'),
-                            DropDownValueModel(name: 'Dummy2', value: 'GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7')
-                          ], onChanged: (value){}, ),
+                          child: TextDropdown(title: 'Enter username', list: umList.map((element){
+
+                            return DropDownValueModel(name: element!.name, value: element);
+                          }).toList(), onChanged: (value){}, ),
                         ),
                         // IconTextField(
                         //     hintText: 'Enter user name',
@@ -345,6 +349,23 @@ class _HomeTabState extends State<HomeTab> {
     // }
   }
 
+  List<UserModel?> umList = [
+    UserModel(name: 'Select someone', publicKey: 'publicKey', email: 'email', role: 'role'),
+  ];
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUsers();
+  }
+
+  getUsers() async {
+    umList = await FirebaseService().getAllUsers();
+    print(umList.length);
+    setState(() {
+
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -537,6 +558,7 @@ class _HomeTabState extends State<HomeTab> {
                             text: 'ADD ASSETS',
                             backgroundColor: kPrimaryColor,
                             onPressed: () {
+                              // getUsers();
                               showAddAssetsDialog(size);
                             },
                           ),

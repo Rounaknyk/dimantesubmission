@@ -163,6 +163,7 @@ async function assetMinter(res,asset_name, distributor, recevier) {
 
 
 }
+
 // setupRecevier("", "", "");
 async function setupRecevier(recevier, distributor, asset_name) {
   try {
@@ -171,6 +172,7 @@ async function setupRecevier(recevier, distributor, asset_name) {
       var issuingKeys = DiamSdk.Keypair.fromSecret(
         "SC4I55A7DI3UGH4S72PGDCH5JL4C3G3OKRGOHDYQSI6OOP35PLCUYLPP"
       );
+      
       var receivingKeys = DiamSdk.Keypair.fromSecret(
         "SDILEZ54H53ILMRKZ72JRWRGTYOR7YPN457ASA3KHPCI4IWD74DUVFBS"
       );
@@ -178,7 +180,6 @@ async function setupRecevier(recevier, distributor, asset_name) {
 
       const account = await server.loadAccount(receivingKeys.publicKey());
 
-    
       const _asset = new Asset(
           "RBj",
           issuingKeys.publicKey(), //issuer

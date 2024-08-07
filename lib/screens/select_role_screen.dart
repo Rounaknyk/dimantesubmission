@@ -26,47 +26,10 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
   AccountModel? accModel;
   bool isOrg = false;
 
-  Future<void> storeUserModel(UserModel userModel) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      // Convert UserModel to JSON string
-      final userJson = jsonEncode(userModel.toJson());
-
-      // Store the JSON string in SharedPreferences
-      await prefs.setString('user_model', userJson);
-    }catch(e){
-      print('Error saving!');
-    }
-  }
-
-  Future<UserModel?> getUserModel() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJsonString = prefs.getString('user_model');
-    print(userJsonString);
-    if (userJsonString != null) {
-      // Convert JSON string to UserModel
-      final userJson = jsonDecode(userJsonString) as Map<String, dynamic>;
-      return UserModel.fromJson(userJson);
-    }
-
-    return null; // Return null if no data found
-  }
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getUsers();
-  }
-
-  getUsers() async {
-    UserModel? model = await getUserModel();
-    // print("NAME: ${model!.name}");
-    print(model!.accModel.pairPublicKey);
-    if(model != null){
-      // Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen()));
-    }
   }
 
   @override

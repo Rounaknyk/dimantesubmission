@@ -1,8 +1,11 @@
 import 'package:diamanteblockchain/class/alert.dart';
+import 'package:diamanteblockchain/class/firebase_service.dart';
+import 'package:diamanteblockchain/class/local_data.dart';
 import 'package:diamanteblockchain/constants.dart';
 import 'package:diamanteblockchain/custom/custom_button.dart';
 import 'package:diamanteblockchain/custom/icon_textfield.dart';
 import 'package:diamanteblockchain/custom/reusable_textfield.dart';
+import 'package:diamanteblockchain/models/user_model.dart';
 import 'package:diamanteblockchain/screens/home_screen.dart';
 import 'package:diamanteblockchain/screens/register_screen.dart';
 import 'package:diamanteblockchain/screens/select_role_screen.dart';
@@ -10,6 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
+import 'dart:html' as html;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,7 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
       FirebaseAuth auth = FirebaseAuth.instance;
 
       await auth.signInWithEmailAndPassword(email: email, password: password);
-      Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: '',)));
+      LocalData().saveToLocalStorage('uid', auth.currentUser!.uid);
+      UserModel? um = await FirebaseService().getData(auth.currentUser!.uid);
+      Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: '', um: um)));
     }catch(e){
       Alert(context: context).alert(e);
       print(e);
@@ -40,7 +46,24 @@ class _LoginScreenState extends State<LoginScreen> {
       loading = false;
     });
   }
-  
+
+  void _loadStoredValue() {
+    setState(() {
+       print(html.window.localStorage['myKey']);
+    });
+  }
+
+  void _saveToLocalStorage(data) {
+    html.window.localStorage['myKey'] = data;
+    _loadStoredValue();
+  }
+
+  void _clearLocalStorage() {
+    html.window.localStorage.remove('myKey');
+    _loadStoredValue();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -81,7 +104,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             });
                           }), width: size.width * 0.3),
                           SizedBox(height: 32,),
-                          Container(child: CustomButton(text: 'LOGIN', backgroundColor: kPrimaryColor, onPressed: (){}), width: size.width * 0.3),
+                          Container(child: CustomButton(text: 'LOGIN', backgroundColor: kPrimaryColor, onPressed: (){
+                            _loadStoredValue();
+                            // _saveToLocalStorage('HELLOO!');
+                            login();
+                          }), width: size.width * 0.3),
                           SizedBox(height: 32,),
                           Hero(
                             tag: 'hero',

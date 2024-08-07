@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diamanteblockchain/class/alert.dart';
 import 'package:diamanteblockchain/constants.dart';
 import 'package:diamanteblockchain/custom/custom_button.dart';
@@ -8,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
+
+import '../class/local_data.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -29,6 +32,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       FirebaseAuth auth = FirebaseAuth.instance;
       await auth.createUserWithEmailAndPassword(email: email, password: pass);
       await auth.currentUser!.updateDisplayName(name);
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+      String uid = auth.currentUser!.uid;
+      final data = await firestore.collection('Users').doc(uid).set({
+        'name' : name,
+        'uid' : auth.currentUser!.uid,
+        'email' : email,
+        'role' : role,
+        'publicKey': '',
+        'privateKey': '',
+      });
+
+      LocalData().saveToLocalStorage('uid', uid);
+
       print('done');
       Alert(context: context).msg('Registered!');
       setState(() {

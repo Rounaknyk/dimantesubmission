@@ -43,6 +43,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   text_hover: ^1.0.0+1
   dropdown_textfield: ^1.2.0
+  cloud_firestore: ^5.2.1
 
 dev_dependencies:
   flutter_test:

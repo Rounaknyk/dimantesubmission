@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
+    "diamante-hd-wallet": "^1.0.8",
     "diamante-sdk-js": "^1.0.3",
     "express": "^4.19.2",
     "node-fetch": "^2.7.0"

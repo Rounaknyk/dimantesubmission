@@ -9,16 +9,19 @@ import 'package:diamanteblockchain/models/user_model.dart';
 import 'package:diamanteblockchain/screens/home_tab.dart';
 import 'package:diamanteblockchain/screens/view_transaction_tab.dart';
 import 'package:diamanteblockchain/services/create_account.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:text_hover/config.dart';
+import 'package:http/http.dart' as http;
 import 'dart:js' as js;
 
 import 'package:text_hover/text_hover.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({required this.pKey});
+  HomeScreen({required this.pKey,  this.um = null});
+  UserModel? um;
   String pKey;
 
   @override
@@ -29,133 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
   UserModel? um;
   bool loading = false;
 
-  // void checkDiamExtension() {
-  //   if (js.context.hasProperty('diam')) {
-  //     print("Diam extension is installed!");
-  //
-  //     try {
-  //       var connectResult = js.context['diam'].callMethod('connect');
-  //
-  //       if (connectResult is js.JsObject && connectResult.hasProperty('then')) {
-  //         // If it's a Promise-like object
-  //         connectResult.callMethod('then', [
-  //           (result) {
-  //             setState(() {
-  //               pKey = result['message'][0];
-  //             });
-  //             print(pKey);
-  //             Alert(context: context).alert(result as js.JsObject);
-  //           }
-  //         ]).callMethod('catch', [
-  //           (error) {
-  //             print('Error: $error');
-  //           }
-  //         ]);
-  //       } else {
-  //         // If it's not a Promise-like object, assume it's the result directly
-  //         print('User active public key is: ${connectResult['message'][0]}');
-  //       }
-  //     } catch (e) {
-  //       print('Error connecting to Diam: $e');
-  //     }
-  //   } else {
-  //     print("Diam extension is not installed.");
-  //   }
-  // }
-
-  // Future<void> connectDiam() async {
-  //   if (js.context.hasProperty('diam')) {
-  //     try {
-  //       final result =
-  //           await promiseToFuture(js.context['diam'].callMethod('connect'));
-  //       print("Result ${result.runtimeType}");
-  //       if (result != null) {
-  //         if (result is Map) {
-  //           if (result.containsKey('message')) {
-  //             final message = result['message'];
-  //             if (message is List && message.isNotEmpty) {
-  //               final publicKey = message[0];
-  //               print(publicKey);
-  //               pKey = message[0];
-  //               setState(() {});
-  //             } else {
-  //               print('Unexpected message structure: $message');
-  //             }
-  //           } else {
-  //             print(
-  //                 'Result does not contain "message" key. Keys: ${result.keys.toList()}');
-  //           }
-  //         } else {
-  //           print('Result is not a Map. Type: ${result.runtimeType}');
-  //         }
-  //       } else {
-  //         print('Result is null');
-  //       }
-  //     } catch (error) {
-  //       print('Error connecting to Diam: $error');
-  //     }
-  //   } else {
-  //     print('Diam extension is not installed.');
-  //   }
-  // }
-
-  // Future<void> connectDiam() async {
-  //   if (js.context.hasProperty('diam')) {
-  //     try {
-  //       final result = await promiseToFuture(js.context['diam'].callMethod('connect'));
-  //
-  //       print("AWAIT: $result");
-  //       window.console.log('RESULTTTT: $result ');
-  //
-  //       window.console.log('Result as JSON string: ${jsonEncode(result)}');
-  //
-  //       String prettyJsonString = const JsonEncoder.withIndent('  ').convert(result);
-  //       window.console.log('Pretty printed JSON result: $prettyJsonString');
-  //       debugPrint('AWAIT LODE: $result', wrapWidth: 10);
-  //
-  //       print('Raw result from diam.connect(): ${jsonEncode(result)}');
-  //       js.context.callMethod('console.log', ['${result}']);
-  //
-  //       pKey = "NN $result";
-  //       setState(() {
-  //         pKey = "NN $result";
-  //       });
-  //
-  //       if (result != null) {
-  //         pKey = result;
-  //         print("THIS IS THE RESULT: ${result}");
-  //         if (result is Map) {
-  //           if (result.containsKey('message')) {
-  //             final message = result['message'];
-  //             if (message is List && message.isNotEmpty) {
-  //               final publicKey = message[0];
-  //               pKey = message[0];
-  //               setState(() {
-  //
-  //               });
-  //               js.context.callMethod('console.log', ['${publicKey}']);
-  //               // print('User active public key is: $publicKey');
-  //               // debugPrint('${publicKey}!', wrapWidth: 10);
-  //             } else {
-  //               print('Unexpected message structure: $message');
-  //             }
-  //           } else {
-  //             print('Result does not contain "message" key. Keys: ${result.keys.toList()}');
-  //           }
-  //         } else {
-  //           print('Result is not a Map. Type: ${result.runtimeType}');
-  //         }
-  //       } else {
-  //         print('Result is null');
-  //       }
-  //     } catch (error) {
-  //       print('Error connecting to Diam: $error');
-  //     }
-  //   } else {
-  //     print('Diam extension is not installed.');
-  //   }
-  // }
-
   Future<dynamic> promiseToFuture(Object jsPromise) {
     final completer = Completer<dynamic>();
     final success = js.allowInterop((result) => completer.complete(result));
@@ -163,32 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
     js.context['Promise'].callMethod('resolve', [jsPromise]).callMethod(
         'then', [success, error]);
     return completer.future;
-  }
-
-  getUsers() async {
-    um = await getUserModel();
-    print("NAME: ${um!.name}");
-  }
-
-  Future<UserModel?> getUserModel() async {
-    setState(() {
-      loading = true;
-    });
-    final prefs = await SharedPreferences.getInstance();
-    final userJsonString = prefs.getString('user_model');
-    print(userJsonString);
-    if (userJsonString != null) {
-      // Convert JSON string to UserModel
-      final userJson = jsonDecode(userJsonString) as Map<String, dynamic>;
-      setState(() {
-        loading = false;
-      });
-      return UserModel.fromJson(userJson);
-    }
-    setState(() {
-      loading = false;
-    });
-    return null; // Return null if no data found
   }
 
   void signTransaction() async {
@@ -227,9 +77,14 @@ class _HomeScreenState extends State<HomeScreen> {
     pKey = widget.pKey;
     print("CIN $pKey");
     content = HomeTab(pKey: pKey);
+    getDetails();
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   checkDiamExtension();
     // });
+  }
+
+  getDetails() async {
+    print("DETAILS IS ${FirebaseAuth.instance.currentUser!.uid}");
   }
 
   Widget content = Container();
@@ -242,12 +97,69 @@ class _HomeScreenState extends State<HomeScreen> {
   String navText = 'home';
   String pKey = '';
 
+
+  fetchOpertaions(transactionId) async {
+    final url = Uri.parse('https://diamtestnet.diamcircle.io/transactions/$transactionId/operations');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          var operationType = data['_embedded']['type'];
+          print("Transactions: $operationType");
+
+          return operationType;
+
+          // isLoading = false;
+        });
+      } else {
+
+        throw Exception('Failed to load transactions');
+      }
+    } catch (e) {
+      print('Error: $e');
+      return 'None';
+      setState(() {
+        // isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchTransactions() async {
+    const accountId = 'GCNLWIT4BKHN4Y4KSNLEOCTRC7YKWSHULAYGQN3FN4GCZSYSKE4G7FTC';
+    final url = Uri.parse('https://diamtestnet.diamcircle.io/accounts/$accountId/transactions');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          var transactions = data['_embedded']['records'][0]['source_account'];
+          print("Transactions: $transactions");
+          // isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load transactions');
+      }
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        // isLoading = false;
+      });
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
 
     Size size = MediaQuery.of(context).size;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(onPressed: (){
+        fetchTransactions();
+      }),
       // floatingActionButton: FloatingActionButton(onPressed: ()async{
       //   final transactionXdr = await CreateAccount(context).getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
       //   // checkDiamExtension();

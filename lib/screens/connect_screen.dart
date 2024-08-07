@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:diamanteblockchain/class/local_data.dart';
 import 'package:diamanteblockchain/custom/custom_button.dart';
 import 'package:diamanteblockchain/screens/home_screen.dart';
 import 'package:diamanteblockchain/services/create_account.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -44,8 +47,16 @@ class _ConnectScreenState extends State<ConnectScreen> {
               print('Error: $error');
             }
           ]);
+
           if(pKey != null && pKey.isNotEmpty){
+            String uid = FirebaseAuth.instance.currentUser!.uid;
             await CreateAccount(context).createParentAcc(pKey);
+            await FirebaseFirestore.instance.collection('Users').doc(uid).set({
+              'publicKey' : pKey
+
+            }, SetOptions(merge: true));
+            LocalData().saveToLocalStorage('primaryKey', pKey);
+            LocalData().saveToLocalStorage('uid', uid);
             Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
           }
         } else {

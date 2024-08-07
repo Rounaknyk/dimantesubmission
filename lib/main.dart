@@ -53,7 +53,7 @@ class _MyAppState extends State<MyApp> {
         fontFamily: 'Baloo',
         floatingActionButtonTheme: FloatingActionButtonThemeData(backgroundColor: kPrimaryColor)
       ),
-      initialRoute: auth!.currentUser == null ? '/connect' : '/home',
+      initialRoute: auth!.currentUser == null ? '/home' : '/home',
       routes: {
         '/login' : (context) => LoginScreen(),
         '/register' : (context) => RegisterScreen(),
