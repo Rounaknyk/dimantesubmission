@@ -49,14 +49,14 @@ class _ConnectScreenState extends State<ConnectScreen> {
           ]);
 
           if(pKey != null && pKey.isNotEmpty){
-            String uid = FirebaseAuth.instance.currentUser!.uid;
-            await CreateAccount(context).createParentAcc(pKey);
-            await FirebaseFirestore.instance.collection('Users').doc(uid).set({
-              'publicKey' : pKey
-
-            }, SetOptions(merge: true));
-            LocalData().saveToLocalStorage('primaryKey', pKey);
-            LocalData().saveToLocalStorage('uid', uid);
+            // String uid = FirebaseAuth.instance.currentUser!.uid;
+            // await CreateAccount(context).createParentAcc(pKey);
+            // await FirebaseFirestore.instance.collection('Users').doc(uid).set({
+            //   'publicKey' : pKey
+            //
+            // }, SetOptions(merge: true));
+            // LocalData().saveToLocalStorage('primaryKey', pKey);
+            // LocalData().saveToLocalStorage('uid', uid);
             Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
           }
         } else {

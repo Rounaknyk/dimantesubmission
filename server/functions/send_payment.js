@@ -8,26 +8,47 @@ const paymentRouter = express.Router();
 //desintation account = 
 //
 //sendPayment('18', 'Hello there from Rounak', 'GAP6DRIHKH3A3QUQ7HG4IXCRRU654RGN54TLHXTHUINWNLHZHSCTWBAR', 'SBXR47PLRQIHWIWMR6SW62CGMPF2TULBWPI6VV56DSLAD55EGVTLNJ2R');
+async function sendPayment(res, childPublicKey, amount, userPublicKey, assetName){
 
-async function sendPayment(res, am,me,de,so){
-        console.log(typeof me);
-        var amount = Buffer.from(am, 'utf8').toString();;
-        var memo = Buffer.from(me, 'utf8').toString();
-        var destinationId = Buffer.from(de, 'utf8').toString();
-        var sourceSecretKey = Buffer.from(so, 'utf8').toString();
+        amount = Buffer.from(amount, 'utf8').toString();;
+        assetName = Buffer.from(assetName, 'utf8').toString();
+        var destinationId = Buffer.from(userPublicKey, 'utf8').toString();
+        var sourceSecretKey = Buffer.from(childSecretKey, 'utf8').toString();
         console.log("Reached");
-            var server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io");
-        var sourceKeys = DiamSdk.Keypair.fromSecret(""+`${sourceSecretKey}`);
+        var server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io");
+        const sourceAccount = await server.loadAccount(childPublicKey)
+        //constructing the transaction
+        var transaction = new DiamanteSdk.TransactionBuilder(sourceAccount, {
+          fee: DiamanteSdk.BASE_FEE,
+          networkPassphrase: DiamanteSdk.Networks.TESTNET,
+        })
+          //adding payment operations to transfer
+          .addOperation(
+            DiamanteSdk.Operation.payment({
+              destination: destinationId, //
+              asset: DiamanteSdk.Asset.native(),
+              amount: amount.toString(),
+            })
+          )
+          .setTimeout(0)
+          .build();
+        //extracting the transaction XDR to pass it to extension
+        var xdr = transaction.toEnvelope().toXDR('base64');
+        console.log(xdr);
+        return res.json({"text" : xdr});
         //var destinationId = "GC4ZJJRESNHECNST6HA5HUBYAUUGETMKGESJMEKYQLYBCQXTLYNVCUY7";
         // Transaction will hold a built transaction we can resubmit if the result is unknown.
         var transaction;
-
+      //   const _asset = new Asset(
+      //     assetName,
+      //     sourceKeys.publicKey(), //issuer
+      // );
         // First, check to make sure that the destination account exists.
         // You could skip this, but if the account does not exist, you will be charged
         // the transaction fee when the transaction fails.
 
         server
-          .loadAccount(""+`${destinationId}`)
+          .loadAccount(destinationId)
           // If the account is not found, surface a nicer error message for logging.
           .catch(function (error) {
             if (error instanceof DiamSdk.NotFoundError) {
@@ -36,7 +57,7 @@ async function sendPayment(res, am,me,de,so){
           })
           // If there was no error, load up-to-date information on your account.
           .then(function () {
-            return server.loadAccount(sourceKeys.publicKey());
+            return server.loadAccount(destinationId);
           })
           .then(function (sourceAccount) {
             // Start building the transaction.
@@ -46,23 +67,24 @@ async function sendPayment(res, am,me,de,so){
             })
               .addOperation(
                 DiamSdk.Operation.payment({
-                  destination: ""+`${destinationId}`,
+                  destination: destinationId,
                   // Because Diamante allows transaction in many currencies, you must
                   // specify the asset type. The special "native" asset represents Lumens.
                   asset: DiamSdk.Asset.native(),
-                  amount: ""+`${amount}`,
+                  //asset: _asset
+                  amount: amount,
                 })
               )
               // A memo allows you to add your own metadata to a transaction. It's
               // optional and does not affect how Diamante treats the transaction.
-              .addMemo(DiamSdk.Memo.text(""+`${memo}`))
+              .addMemo(DiamSdk.Memo.text("memo"))
               // Wait a maximum of three minutes for the transaction
               .setTimeout(180)
               .build();
             // Sign the transaction to prove you are actually the person sending it.
-            transaction.sign(sourceKeys);
+            // transaction.sign(sourceKeys);
             // And finally, send it off to Diamante!
-            return server.submitTransaction(transaction);
+            return res.json({"text" : transaction.toEnvelope().toXDR('base64')});
           })
           .then(function (result) {
             console.log("Success! Results:", result);
@@ -70,6 +92,7 @@ async function sendPayment(res, am,me,de,so){
           })
           .catch(function (error) {
             console.error("Something went wrong!", error);
+            return res.json(error);
             // If the result is unknown (no response body, timeout etc.) we simply resubmit
             // already built transaction:
             // server.submitTransaction(transaction);
@@ -78,9 +101,10 @@ async function sendPayment(res, am,me,de,so){
 
 paymentRouter.post('/send-payment', async (req, res) => {
     try{
-      await sendPayment(res, "2", "Hello there from Rounak", "GAH6GDAR47ZKAVXEQJN2DF3AFP6NOXFYAHIRTV73BC2TGZRTRBFVDKXR", "SAUNVMEY5TOYOGQKH63V4IFCKZNHSKTM5VBPSH6XWUE44F4UAVTMQCSY");
+      const {childPublicKey, amount, userPublicKey, assetName} = req.body;
+      await sendPayment(res, childPublicKey, amount, userPublicKey, assetName);
     }catch(e){
-        console.log(e);
+      console.log(e);
     }
 });
 

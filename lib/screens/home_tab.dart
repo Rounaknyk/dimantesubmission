@@ -1,7 +1,12 @@
+import 'package:diamanteblockchain/class/alert.dart';
 import 'package:diamanteblockchain/class/firebase_service.dart';
+import 'package:diamanteblockchain/class/local_data.dart';
+import 'package:diamanteblockchain/custom/child_card.dart';
 import 'package:diamanteblockchain/custom/dropdown_textfield.dart';
+import 'package:diamanteblockchain/models/child_model.dart';
 import 'package:diamanteblockchain/models/user_model.dart';
 import 'package:diamanteblockchain/services/create_account.dart';
+import 'package:diamanteblockchain/services/payment_service.dart';
 import 'package:dropdown_textfield/dropdown_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -12,8 +17,9 @@ import '../custom/custom_button.dart';
 import '../custom/icon_textfield.dart';
 
 class HomeTab extends StatefulWidget {
-  HomeTab({required this.pKey});
+  HomeTab({required this.pKey, required this.role});
   String pKey;
+  String role;
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -21,6 +27,8 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   showAddAssetsDialog(Size size) async {
+    String assetName = '', amount = '2', publicKey = '';
+    publicKey = widget.pKey;
     showDialog(
         context: context,
         builder: (context) {
@@ -52,22 +60,35 @@ class _HomeTabState extends State<HomeTab> {
                         IconTextField(
                             hintText: 'Enter asset name',
                             icon: Icons.abc,
-                            onChanged: (value) {}),
+                            onChanged: (value) {
+                              setState(() {
+                                assetName = value;
+                              });
+                            }),
                         SizedBox(
                           height: 12.0,
                         ),
                         IconTextField(
                             hintText: 'Amount',
                             icon: Icons.money,
-                            onChanged: (value) {}),
+                            onChanged: (value) {
+                              setState(() {
+                                amount = value;
+                              });
+                            }),
                         SizedBox(
                           height: 12.0,
                         ),
                         IconTextField(
                           hintText: 'Enter public key',
                           icon: Icons.key,
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            setState(() {
+                              publicKey = value;
+                            });
+                          },
                           isSecured: true,
+                          inputValue: publicKey,
                         ),
                         SizedBox(
                           height: 12.0,
@@ -76,7 +97,7 @@ class _HomeTabState extends State<HomeTab> {
                             text: 'ADD',
                             backgroundColor: kPrimaryColor,
                             onPressed: () async {
-                              signTransactionAsset();
+                              mintAssets(assetName, amount, publicKey, childPublicKey);
                               // await CreateAccount(context).mint();
                             }),
                       ],
@@ -101,7 +122,12 @@ class _HomeTabState extends State<HomeTab> {
         });
   }
 
+  sendAssets(userPublicKey, amount, childPublicKey, assetName) async {
+    var res = await PaymentServices(context).sendAssets(userPublicKey!, amount, childPublicKey, assetName);
+  }
+
   showAddAccount(Size size) async {
+    String assetName = 'default';
     showDialog(
         context: context,
         builder: (context) {
@@ -132,11 +158,22 @@ class _HomeTabState extends State<HomeTab> {
                         SizedBox(
                           height: 12.0,
                         ),
+                        IconTextField(
+                            hintText: 'Enter asset name',
+                            icon: Icons.abc,
+                            onChanged: (value) {
+                              setState(() {
+                                assetName = value;
+                              });
+                            }),
+                        SizedBox(
+                          height: 12.0,
+                        ),
                         CustomButton(
                             text: 'SIGN',
                             backgroundColor: kPrimaryColor,
                             onPressed: () {
-                              signTransaction();
+                              signTransaction(assetName);
                             }),
                       ],
                     ),
@@ -160,7 +197,9 @@ class _HomeTabState extends State<HomeTab> {
         });
   }
 
-  showSendAssetDialog(Size size) async {
+  showSendAssetDialog(Size size, assetName) async {
+    String amount = '2.02';
+    UserModel? um;
 
     showDialog(
         context: context,
@@ -196,9 +235,13 @@ class _HomeTabState extends State<HomeTab> {
                           height: 50,
                           width: double.infinity,
                           child: TextDropdown(title: 'Enter username', list: umList.map((element){
-
                             return DropDownValueModel(name: element!.name, value: element);
-                          }).toList(), onChanged: (value){}, ),
+                          }).toList(), onChanged: (val){
+                            print("VALUE OF DROPDOWN: ${val.value}");
+                            setState(() {
+                              um = val.value;
+                            });
+                          },),
                         ),
                         // IconTextField(
                         //     hintText: 'Enter user name',
@@ -216,21 +259,12 @@ class _HomeTabState extends State<HomeTab> {
                         SizedBox(
                           height: 12.0,
                         ),
-                        Text('Public key: ', style: TextStyle(fontWeight: FontWeight.bold),),
-                        SizedBox(height: 4.0),
-                        IconTextField(
-                          hintText: 'Enter public key',
-                          icon: Icons.key,
-                          onChanged: (value) {},
-                          isSecured: true,
-                        ),
-                        SizedBox(
-                          height: 12.0,
-                        ),
                         CustomButton(
                             text: 'SEND',
                             backgroundColor: kPrimaryColor,
-                            onPressed: () {}),
+                            onPressed: () {
+                              sendAssets(um!.publicKey, amount, childPublicKey, 'assetName');
+                            }),
                       ],
                     ),
                     Positioned(
@@ -258,14 +292,15 @@ class _HomeTabState extends State<HomeTab> {
   //   print("TRNS : $trx}");
   // }
 
-  void signTransactionAsset() async {
+  List<ChildModel> childList = [];
+  void mintAssets(String assetName, String amount, String parentPublicKey, String childPublicKey) async {
     // if (js.context.hasProperty('diam')) {
     // final transactionXdr;
     try {
       // final transactionXdr = await CreateAccount(context)
       //     .getTrx("GBOGTJ5FNGEVS2ILE7YDZMAWMMOLBBKXKEFHAX3UYYTF6PKQQPMPXIBJ");
-      print("THIS IS UR PKEY ${widget.pKey}");
-      final transactionXdr = await CreateAccount(context).mint();
+      print("THIS IS UR PKEY ${parentPublicKey}");
+      final transactionXdr = await CreateAccount(context).mint(assetName, amount, parentPublicKey, childPublicKey);
       print("NSS ${transactionXdr}");
       final shouldSubmit = true;
       final network = "Diamante Testnet";
@@ -303,20 +338,22 @@ class _HomeTabState extends State<HomeTab> {
     // }
   }
 
-  void signTransaction() async {
-    // if (js.context.hasProperty('diam')) {
-    // final transactionXdr;
+  void signTransaction(assetName) async {
+
     try {
-      // final transactionXdr = await CreateAccount(context)
-      //     .getTrx("GBOGTJ5FNGEVS2ILE7YDZMAWMMOLBBKXKEFHAX3UYYTF6PKQQPMPXIBJ");
       print("THIS IS UR PKEY ${widget.pKey}");
-      final transactionXdr = await CreateAccount(context)
+      final res = await CreateAccount(context)
           .getTrx(widget.pKey);
-      print(transactionXdr);
+      childSecretKey = res['childSecretKey'];
+      childPublicKey = res['childPublicKey'];
+      LocalData().saveToLocalStorage('childPublicKey', res['childPublicKey']);
+      LocalData().saveToLocalStorage('childSecretKey', res['childSecretKey']);
+      var transactionXdr = res['text'];
+      // print(transactionXdr);
       final shouldSubmit = true;
       final network = "Diamante Testnet";
 
-      print("${transactionXdr} xdr generated");
+      // print("${transactionXdr} xdr generated");
       try {
         js.JsObject diam = js.context['diam'];
         js.JsObject signResult = diam.callMethod('sign', [transactionXdr, shouldSubmit, network]);
@@ -347,16 +384,40 @@ class _HomeTabState extends State<HomeTab> {
     // } else {
     //   print("Diam extension is not installed.");
     // }
+    setState(() {
+
+    });
+    childList.add(ChildModel(id: '1', childPublicKey: childPublicKey, assetName: assetName, childSecretKey: childSecretKey, balance: '0', parentPubicKey: widget.pKey));
+    Navigator.pop(context);
   }
 
   List<UserModel?> umList = [
     UserModel(name: 'Select someone', publicKey: 'publicKey', email: 'email', role: 'role'),
   ];
+  String parentSecretKey = '', childSecretKey = '', childPublicKey = '';
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    getKeys();
     getUsers();
+  }
+
+  getKeys() async {
+    var parentSecretKey = await LocalData().loadStoredValue('secretKey');
+    print("THIS IS PARENT KEY $parentSecretKey");
+
+    try {
+      childSecretKey = await LocalData().loadStoredValue('childSecretKey');
+      childPublicKey = await LocalData().loadStoredValue('childPublicKey');
+      print("THIS IS CHILD S KEY $childSecretKey");
+      print("THIS IS CHILD P KEY $childPublicKey");
+
+    }catch(e){
+      childSecretKey = '';
+      Alert(context: context).alert('Error getting child key');
+    }
   }
 
   getUsers() async {
@@ -366,6 +427,7 @@ class _HomeTabState extends State<HomeTab> {
 
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -391,7 +453,7 @@ class _HomeTabState extends State<HomeTab> {
                     height: 250,
                     width: 230,
                     padding:
-                        EdgeInsets.symmetric(vertical: 50.0, horizontal: 50),
+                    EdgeInsets.symmetric(vertical: 50.0, horizontal: 50),
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         color: kPrimaryColor),
@@ -420,156 +482,8 @@ class _HomeTabState extends State<HomeTab> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Material(
-                elevation: 4,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 230,
-                  height: 250,
-                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 8),
-                  decoration:
-                      BoxDecoration(borderRadius: BorderRadius.circular(12)),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Account 1',
-                          style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(
-                          height: 8.0,
-                        ),
-                        Text(
-                          'GDUJ....UZA7',
-                          style: TextStyle(color: Colors.grey),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(
-                          height: 8.0,
-                        ),
-                        InkWell(
-                          onTap: () {},
-                          child: Container(
-                            padding: EdgeInsets.all(2.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.copy,
-                                  color: kGrey,
-                                  size: 14,
-                                ),
-                                SizedBox(
-                                  width: 4.0,
-                                ),
-                                Text(
-                                  'Copy',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 8.0,
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Expanded(
-                              child: Container(
-                                child: Divider(
-                                  height: 2,
-                                  thickness: 1,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 4.0,
-                            ),
-                            LottieBuilder.asset(
-                              'animations/infinity.json',
-                              height: 30,
-                              width: 30,
-                            ),
-                            SizedBox(
-                              width: 4.0,
-                            ),
-                            Expanded(
-                              child: Container(
-                                child: Divider(
-                                  height: 2,
-                                  thickness: 1,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8.0,
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Asset: ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              'BridgeGoa',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8.0,
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Balance: ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '500',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8.0,
-                        ),
-                        Container(
-                          child: CustomButton(
-                            text: 'ADD ASSETS',
-                            backgroundColor: kPrimaryColor,
-                            onPressed: () {
-                              // getUsers();
-                              showAddAssetsDialog(size);
-                            },
-                          ),
-                          height: 40,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            childList.isEmpty ? Container() : ChildCard(cm: childList[0], childSecretKey: childList[0].childSecretKey, parentPublicKey: childList[0].parentPubicKey, childPublicKey: childPublicKey, role: widget.role),
+    // ChildCard(cm: ChildModel(childPublicKey: childPublicKey, assetName: 'bridgeGoa', childSecretKey: childSecretKey, balance: '1800', parentPubicKey: widget.pKey, id: '1'), childSecretKey: childSecretKey, parentPublicKey: widget.pKey, childPublicKey: childPublicKey, role: widget.role),
           ],
         ),
         SizedBox(
@@ -592,7 +506,7 @@ class _HomeTabState extends State<HomeTab> {
               ),
               InkWell(
                 onTap: () {
-                  showSendAssetDialog(size);
+                  showSendAssetDialog(size, 'assetName');
                   // onPressed();
                 },
                 child: Container(

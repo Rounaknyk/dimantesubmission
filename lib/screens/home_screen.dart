@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:html';
 import 'package:diamanteblockchain/class/alert.dart';
+import 'package:diamanteblockchain/class/local_data.dart';
 import 'package:diamanteblockchain/constants.dart';
 import 'package:diamanteblockchain/custom/custom_button.dart';
 import 'package:diamanteblockchain/custom/icon_textfield.dart';
@@ -19,10 +20,13 @@ import 'dart:js' as js;
 
 import 'package:text_hover/text_hover.dart';
 
+import '../models/transaction_model.dart';
+
 class HomeScreen extends StatefulWidget {
-  HomeScreen({required this.pKey,  this.um = null});
+  HomeScreen({required this.pKey,  this.um = null, this.role = "government"});
   UserModel? um;
   String pKey;
+  String role;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -45,14 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
     // if (js.context.hasProperty('diam')) {
     // final transactionXdr;
     try {
-      final transactionXdr = await CreateAccount(context)
-          .getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
-      print(transactionXdr);
+      // final transactionXdr = await CreateAccount(context)
+      //     .getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
+      // print(transactionXdr);
       final shouldSubmit = true;
       final network = "Diamante Testnet";
-
+      print("Reached");
       js.context['diam'].callMethod('sign', [
-        transactionXdr,
+        "AAAAAgAAAADE2TMk6WEWPe0CltQiU2fRuWr6UNGzU39glfcYy7rLKAAAAGQAHYokAAAAAgAAAAEAAAAAAAAAAAAAAABmtGNXAAAAAAAAAAEAAAAAAAAABgAAAAFHTQAAAAAAAFzJxu/n957G07pfMsoRZ7q/NAScdM3r+rglzDcdyKJBAAAAAlQL5AAAAAAAAAAAAA==",
         shouldSubmit,
         network
       ]).then((result) {
@@ -76,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     pKey = widget.pKey;
     print("CIN $pKey");
-    content = HomeTab(pKey: pKey);
+    // content = HomeTab(pKey: pKey, role: widget.role);
     getDetails();
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   checkDiamExtension();
@@ -98,21 +102,27 @@ class _HomeScreenState extends State<HomeScreen> {
   String pKey = '';
 
 
-  fetchOpertaions(transactionId) async {
+  Future<dynamic> fetchOpertaions(transactionId) async {
     final url = Uri.parse('https://diamtestnet.diamcircle.io/transactions/$transactionId/operations');
 
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
+
           var operationType = data['_embedded']['type'];
+          var funder = data['_embedded']['funder'];
+          var account = data['_embedded']['account'];
           print("Transactions: $operationType");
 
-          return operationType;
+          Map map = {
+            "operationType": operationType,
+            "funder" : funder,
+            "account" : account
+          };
+          return map;
 
           // isLoading = false;
-        });
       } else {
 
         throw Exception('Failed to load transactions');
@@ -134,10 +144,19 @@ class _HomeScreenState extends State<HomeScreen> {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
-          var transactions = data['_embedded']['records'][0]['source_account'];
+          List<TransModel> list = [];
+          var transactions = data['_embedded']['records'];
+          for(var trans in transactions){
+            String funderAcc = '';
+            String operatioType = '';
+            await fetchOpertaions(trans['id']);
+            TransModel(source_account: trans['source_account'], create_date: trans['created_at'], );
+          }
           print("Transactions: $transactions");
+
           // isLoading = false;
+        setState(() {
+
         });
       } else {
         throw Exception('Failed to load transactions');
@@ -155,10 +174,39 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
 
     Size size = MediaQuery.of(context).size;
-
     return Scaffold(
-      floatingActionButton: FloatingActionButton(onPressed: (){
-        fetchTransactions();
+      floatingActionButton: FloatingActionButton(onPressed: () async {
+        // fetchTransactions();
+        print("HIIIII");
+        print("SECRETTTT : ${LocalData().loadStoredValue('childSecretKey')}");
+        var xdr = await CreateAccount(context).createTrust("GM", widget.pKey, "SDCKVXEVLCBPNO3SXR6PWLIFKFHFTSYIR2PZ4PW2JDE53VDYEVU2ZRJR");
+        // var xdr = "AAAAAgAAAABHiHdg9EIPdBsWBSThTs0X374GO62ekwEtfwnj/jGxWwAAAGQAHZCiAAAAAQAAAAEAAAAAAAAAAAAAAABmtIm/AAAAAAAAAAEAAAAAAAAABgAAAAFHTQAAAAAAAJq7InwKjt5jipNWRwpxF/CrSPRYMGg3ZW8MLMsSUThvAAAAAAX14QAAAAAAAAAAAA==";
+        try {
+          print("XDR: $xdr");
+          final shouldSubmit = true;
+          final network = "Diamante Testnet";
+          js.JsObject diam = js.context['diam'];
+          js.JsObject signResult = diam.callMethod('sign', [xdr, shouldSubmit, network]);
+
+          // Check if the result is a Promise-like object
+          if (signResult is js.JsObject && signResult.hasProperty('then')) {
+            signResult.callMethod('then', [
+                  (result) {
+                print('Signature result: $result');
+              }
+            ]).callMethod('catch', [
+                  (error) {
+                print('Error signing transaction: $error');
+              }
+            ]);
+          } else {
+            // If it's not a Promise, assume it's the direct result
+            print('Signature result: $signResult');
+          }
+        } catch (e) {
+          print("TRANS ${e}");
+        }
+        // signTransaction();
       }),
       // floatingActionButton: FloatingActionButton(onPressed: ()async{
       //   final transactionXdr = await CreateAccount(context).getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
@@ -223,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }, onTap: (){
                                     setState(() {
                                       navText = 'home';
-                                      content = HomeTab(pKey: pKey);
+                                      content = HomeTab(pKey: pKey, role: widget.role,);
                                     });
                                   }, hoverColor: Colors.transparent),
                                   SizedBox(width: 24.0,),
@@ -284,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      content,
+                      HomeTab(pKey: pKey, role: widget.role),
                     ],
                   ),
                 ),

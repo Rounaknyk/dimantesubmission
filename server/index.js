@@ -39,7 +39,9 @@ app.use(assetMinter);
 // console.log(secret);
 
 const port = 3000;
-const serverIp = '192.0.0.2';
+// const serverIp = '192.0.0.2';
+// const serverIp = '192.168.102.75';
+const serverIp = '192.168.101.118';
 
 
 //const dbUrl = process.env.dbUrl;
@@ -55,7 +57,7 @@ const serverIp = '192.0.0.2';
 //   console.log("Type:", balance.asset_type, ", Balance:", balance.balance);
 // });
 // }
-app.listen(port, serverIp, () =>{
+app.listen(port, () =>{
     console.log("listening");
 });
 //

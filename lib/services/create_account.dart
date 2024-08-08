@@ -25,10 +25,32 @@ class CreateAccount{
     }
   }
 
-  Future mint() async {
+
+  Future createTrust(assetName, parentPublicKey, childSecretKey) async {
+    try{
+      http.Response res = await http.post(
+          Uri.parse('$kUrl/create-trust'), body: jsonEncode({
+        'parentPublicKey': parentPublicKey,
+        'childSecretKey' : childSecretKey,
+        'assetName' : assetName
+      },), headers: {"Content-Type": "application/json"});
+
+      print("TRUST ${jsonDecode(res.body)['text']}");
+      return jsonDecode(res.body)['text'];
+    }catch(E){
+      print("Flutter error: $E");
+      return {};
+    }
+  }
+
+  Future mint(assetName, amount, parentPublicKey, childPublicKey) async {
     try{
       http.Response res = await http.post(
           Uri.parse('$kUrl/mint'), body: jsonEncode({
+        'assetName' : assetName,
+        'amount' : amount,
+        'parentPublicKey' : parentPublicKey,
+        'childPublicKey' : childPublicKey
       },), headers: {"Content-Type": "application/json"});
 
       print("BHAI ${jsonDecode(res.body)['text']}");
@@ -58,7 +80,7 @@ class CreateAccount{
     }
   }
 
-  Future<String?> getTrx(String key) async {
+  Future getTrx(String key) async {
     try{
       print("reached");
       http.Response res = await http.post(
@@ -67,8 +89,8 @@ class CreateAccount{
       },), headers: {"Content-Type": "application/json"});
 
       // print(jsonDecode(res.body));
-      print(jsonDecode(res.body)['text']);
-      return jsonDecode(res.body)['text'];
+      print(jsonDecode(res.body));
+      return jsonDecode(res.body);
 
     }catch(E){
       print("Flutter error: $E");
