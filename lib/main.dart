@@ -34,7 +34,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  FirebaseAuth auth = FirebaseAuth.instance;
+  // FirebaseAuth auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -53,7 +53,8 @@ class _MyAppState extends State<MyApp> {
         fontFamily: 'Baloo',
         floatingActionButtonTheme: FloatingActionButtonThemeData(backgroundColor: kPrimaryColor)
       ),
-      initialRoute: auth!.currentUser == null ? '/home' : '/home',
+      initialRoute: '/home',
+      // initialRoute: auth!.currentUser == null ? '/home' : '/home',
       routes: {
         '/login' : (context) => LoginScreen(),
         '/register' : (context) => RegisterScreen(),

@@ -117,7 +117,7 @@ async function assetMinter(res, assetName, amount, distributor, recevier) {
       const account = await server.loadAccount(distributor);//"GA3SXDTF26ERV3ZVPH3NG7AGWX772JZCNEOFFZR2EFEH57LI3XZO7OUF");
       const asset = new Asset(
           assetName,
-          distributor//"GA3SXDTF26ERV3ZVPH3NG7AGWX772JZCNEOFFZR2EFEH57LI3XZO7OUF"//CHILD ACCOUNT
+          distributor //"GA3SXDTF26ERV3ZVPH3NG7AGWX772JZCNEOFFZR2EFEH57LI3XZO7OUF"//CHILD ACCOUNT
       );
 
       const transaction = new TransactionBuilder(account, {

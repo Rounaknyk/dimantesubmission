@@ -57,10 +57,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
             // }, SetOptions(merge: true));
             // LocalData().saveToLocalStorage('primaryKey', pKey);
             // LocalData().saveToLocalStorage('uid', uid);
-            Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey, role: 'contractor',)));
           }
         } else {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey, role: 'contractor')));
 
           // If it's not a Promise-like object, assume it's the result directly
           print('User active public key is: ${connectResult['message'][0]}');

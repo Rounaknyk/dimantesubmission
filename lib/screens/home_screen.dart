@@ -20,6 +20,7 @@ import 'dart:js' as js;
 
 import 'package:text_hover/text_hover.dart';
 
+import '../class/format_ket.dart';
 import '../models/transaction_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -82,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     print("CIN $pKey");
     // content = HomeTab(pKey: pKey, role: widget.role);
     getDetails();
+    getTrans();
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   checkDiamExtension();
     // });
@@ -90,18 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
   getDetails() async {
     print("DETAILS IS ${FirebaseAuth.instance.currentUser!.uid}");
   }
-
-  Widget content = Container();
-
-  Color tranColor = Colors.black;
-  Color helpColor = Colors.black;
-  Color homeColor = kPrimaryColor;
-  Color aboutColor = Colors.black;
-
-  String navText = 'home';
-  String pKey = '';
-
-
   Future<dynamic> fetchOpertaions(transactionId) async {
     final url = Uri.parse('https://diamtestnet.diamcircle.io/transactions/$transactionId/operations');
 
@@ -110,19 +100,19 @@ class _HomeScreenState extends State<HomeScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-          var operationType = data['_embedded']['type'];
-          var funder = data['_embedded']['funder'];
-          var account = data['_embedded']['account'];
-          print("Transactions: $operationType");
+        var operationType = data['_embedded']['records'][0]['type'];
+        var funder = data['_embedded']['records'][0]['funder'];
+        var account = data['_embedded']['records'][0]['account'];
+        print("Transactions: $operationType");
 
-          Map map = {
-            "operationType": operationType,
-            "funder" : funder,
-            "account" : account
-          };
-          return map;
+        Map map = {
+          "operationType": operationType,
+          "funder" : funder,
+          "account" : account
+        };
+        return map;
 
-          // isLoading = false;
+        // isLoading = false;
       } else {
 
         throw Exception('Failed to load transactions');
@@ -136,25 +126,35 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  List<TransModel> transList = [];
+
   Future<void> fetchTransactions() async {
-    const accountId = 'GCNLWIT4BKHN4Y4KSNLEOCTRC7YKWSHULAYGQN3FN4GCZSYSKE4G7FTC';
-    final url = Uri.parse('https://diamtestnet.diamcircle.io/accounts/$accountId/transactions');
+    final url = Uri.parse('https://diamtestnet.diamcircle.io/accounts/${widget.pKey}/transactions');
 
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-          List<TransModel> list = [];
-          var transactions = data['_embedded']['records'];
-          for(var trans in transactions){
-            String funderAcc = '';
-            String operatioType = '';
-            await fetchOpertaions(trans['id']);
-            TransModel(source_account: trans['source_account'], create_date: trans['created_at'], );
-          }
-          print("Transactions: $transactions");
+        transList = [];
+        var transactions = data['_embedded']['records'];
+        for(var trans in transactions){
+          String funderAcc = '';
+          String operatioTnype = '';
+          //         "operationType": operationType,
+          // "funder" : funder,
+          // "account" : account
+          var res = await fetchOpertaions(trans['id']);
+          print(trans['source_account']);
+          print(trans['created_at']);
+          print(res['funder']);
+          print(res['operationType']);
+          print(res['account']);
+          // transList.add(TransModel(source_account: trans['source_account'], create_date: trans['created_at'], funder_account: res['funder'], operationType: res['operationType'], account: res['account']));
+          transList.add(TransModel(source_account: FormatKey().formatPublicKey(trans['source_account']), create_date: trans['created_at'], funder_account: FormatKey().formatPublicKey(res['funder']), operationType: res['operationType'], account: FormatKey().formatPublicKey(res['account'])));
+        }
+        print("Transactions: $transactions");
 
-          // isLoading = false;
+        // isLoading = false;
         setState(() {
 
         });
@@ -168,46 +168,69 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
   }
+  getTrans() async {
+    setState(() {
+      screenLoading = true;
+    });
+    await fetchTransactions();
+    print('LENGTH ${transList.length}');
+    setState(() {
+      screenLoading = false;
+    });
+  }
 
+  bool screenLoading = false;
+  Widget content = Container();
+
+  Color tranColor = Colors.black;
+  Color helpColor = Colors.black;
+  Color homeColor = kPrimaryColor;
+  Color aboutColor = Colors.black;
+
+  String navText = 'home';
+  String pKey = '';
 
   @override
   Widget build(BuildContext context) {
 
     Size size = MediaQuery.of(context).size;
     return Scaffold(
-      floatingActionButton: FloatingActionButton(onPressed: () async {
-        // fetchTransactions();
-        print("HIIIII");
-        print("SECRETTTT : ${LocalData().loadStoredValue('childSecretKey')}");
-        var xdr = await CreateAccount(context).createTrust("GM", widget.pKey, "SDCKVXEVLCBPNO3SXR6PWLIFKFHFTSYIR2PZ4PW2JDE53VDYEVU2ZRJR");
-        // var xdr = "AAAAAgAAAABHiHdg9EIPdBsWBSThTs0X374GO62ekwEtfwnj/jGxWwAAAGQAHZCiAAAAAQAAAAEAAAAAAAAAAAAAAABmtIm/AAAAAAAAAAEAAAAAAAAABgAAAAFHTQAAAAAAAJq7InwKjt5jipNWRwpxF/CrSPRYMGg3ZW8MLMsSUThvAAAAAAX14QAAAAAAAAAAAA==";
-        try {
-          print("XDR: $xdr");
-          final shouldSubmit = true;
-          final network = "Diamante Testnet";
-          js.JsObject diam = js.context['diam'];
-          js.JsObject signResult = diam.callMethod('sign', [xdr, shouldSubmit, network]);
-
-          // Check if the result is a Promise-like object
-          if (signResult is js.JsObject && signResult.hasProperty('then')) {
-            signResult.callMethod('then', [
-                  (result) {
-                print('Signature result: $result');
-              }
-            ]).callMethod('catch', [
-                  (error) {
-                print('Error signing transaction: $error');
-              }
-            ]);
-          } else {
-            // If it's not a Promise, assume it's the direct result
-            print('Signature result: $signResult');
-          }
-        } catch (e) {
-          print("TRANS ${e}");
-        }
-        // signTransaction();
-      }),
+      // floatingActionButton: FloatingActionButton(onPressed: (){
+      //   fetchTransactions();
+      // }),
+      // floatingActionButton: FloatingActionButton(onPressed: () async {
+      //   // fetchTransactions();
+      //   print("HIIIII");
+      //   print("SECRETTTT : ${LocalData().loadStoredValue('childSecretKey')}");
+      //   var xdr = await CreateAccount(context).createTrust("GM", widget.pKey, "SDCKVXEVLCBPNO3SXR6PWLIFKFHFTSYIR2PZ4PW2JDE53VDYEVU2ZRJR");
+      //   // var xdr = "AAAAAgAAAABHiHdg9EIPdBsWBSThTs0X374GO62ekwEtfwnj/jGxWwAAAGQAHZCiAAAAAQAAAAEAAAAAAAAAAAAAAABmtIm/AAAAAAAAAAEAAAAAAAAABgAAAAFHTQAAAAAAAJq7InwKjt5jipNWRwpxF/CrSPRYMGg3ZW8MLMsSUThvAAAAAAX14QAAAAAAAAAAAA==";
+      //   try {
+      //     print("XDR: $xdr");
+      //     final shouldSubmit = true;
+      //     final network = "Diamante Testnet";
+      //     js.JsObject diam = js.context['diam'];
+      //     js.JsObject signResult = diam.callMethod('sign', [xdr, shouldSubmit, network]);
+      //
+      //     // Check if the result is a Promise-like object
+      //     if (signResult is js.JsObject && signResult.hasProperty('then')) {
+      //       signResult.callMethod('then', [
+      //             (result) {
+      //           print('Signature result: $result');
+      //         }
+      //       ]).callMethod('catch', [
+      //             (error) {
+      //           print('Error signing transaction: $error');
+      //         }
+      //       ]);
+      //     } else {
+      //       // If it's not a Promise, assume it's the direct result
+      //       print('Signature result: $signResult');
+      //     }
+      //   } catch (e) {
+      //     print("TRANS ${e}");
+      //   }
+      //   // signTransaction();
+      // }),
       // floatingActionButton: FloatingActionButton(onPressed: ()async{
       //   final transactionXdr = await CreateAccount(context).getTrx("GDUJ7O2MRH72ZRGV26RVKM7547O25JAYHOFRZZDYISYM4LNFAEGGUZA7c");
       //   // checkDiamExtension();
@@ -231,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
       //     SizedBox(width: 16.0,),
       //   ],
       // ),
-      body: SafeArea(
+      body: screenLoading ? Center(child: LottieBuilder.asset('animations/infinity.json', height: 200, width: 200,),) : SafeArea(
         child: Stack(
           alignment: Alignment.topLeft,
           children: [
@@ -250,10 +273,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             SizedBox(width: 8.0,),
-                            LottieBuilder.asset('animations/infinity.json', height: 60, width: 60,),
-                            SizedBox(width: 16.0,),
+                            LottieBuilder.asset('animations/logo.json', height: 30, width: 30,),
+                            SizedBox(width: 0.0,),
                             Text(
-                              '$kName',
+                              'iam FundFlow',
                               style: TextStyle(fontSize: 40),
                             ),
                             Spacer(),
@@ -271,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }, onTap: (){
                                     setState(() {
                                       navText = 'home';
-                                      content = HomeTab(pKey: pKey, role: widget.role,);
+                                      content = HomeTab(pKey: pKey, role: widget.role, transList: transList,);
                                     });
                                   }, hoverColor: Colors.transparent),
                                   SizedBox(width: 24.0,),
@@ -332,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      HomeTab(pKey: pKey, role: widget.role),
+                      HomeTab(pKey: pKey, role: widget.role, transList: transList),
                     ],
                   ),
                 ),
