@@ -26,12 +26,12 @@ class CreateAccount{
   }
 
 
-  Future createTrust(assetName, parentPublicKey, childSecretKey) async {
+  Future createTrust(assetName, parentPublicKey, childPublicKey) async {
     try{
       http.Response res = await http.post(
           Uri.parse('$kUrl/create-trust'), body: jsonEncode({
         'parentPublicKey': parentPublicKey,
-        'childSecretKey' : childSecretKey,
+        'childPublicKey' : childPublicKey,
         'assetName' : assetName
       },), headers: {"Content-Type": "application/json"});
 

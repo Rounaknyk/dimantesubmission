@@ -106,7 +106,7 @@ class _HomeTabState extends State<HomeTab> {
                             text: 'ADD',
                             backgroundColor: kPrimaryColor,
                             onPressed: () async {
-                              mintAssets(assetName, amount, publicKey, childPublicKey);
+                              mintAssets(assetName, amount, widget.pKey, childPublicKey);
                               // await CreateAccount(context).mint();
                             }),
                       ],
@@ -380,6 +380,11 @@ class _HomeTabState extends State<HomeTab> {
 
   List<ChildModel> childList = [];
   void mintAssets(String assetName, String amount, String parentPublicKey, String childPublicKey) async {
+    print("MINTING");
+    print(assetName);
+    print(amount);
+    print(parentPublicKey);
+    print(childPublicKey);
     // if (js.context.hasProperty('diam')) {
     // final transactionXdr;
     try {
@@ -435,7 +440,7 @@ class _HomeTabState extends State<HomeTab> {
       LocalData().saveToLocalStorage('childPublicKey', res['childPublicKey']);
       LocalData().saveToLocalStorage('childSecretKey', res['childSecretKey']);
       var transactionXdr = res['text'];
-      // print(transactionXdr);
+      print(transactionXdr);
       final shouldSubmit = true;
       final network = "Diamante Testnet";
 

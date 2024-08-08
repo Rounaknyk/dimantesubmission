@@ -25,7 +25,6 @@ class _ConnectScreenState extends State<ConnectScreen> {
   void checkDiamExtension() async {
     // Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
 
-    // await CreateAccount(context).createParentAcc("GADNO2TVAAEVCHZVTNYUYK5RRLNJSBHRY4HZ3F67GLH7EJI7TRH53RES");
 
     if (js.context.hasProperty('diam')) {
       print("Diam extension is installed!");
@@ -40,13 +39,17 @@ class _ConnectScreenState extends State<ConnectScreen> {
                 pKey = result['message'][0];
               });
               print(pKey);
-              // Alert(context: context).alert(result as js.JsObject);
+              CreateAccount(context).createParentAcc(pKey);
+
+                  // Alert(context: context).alert(result as js.JsObject);
             }
           ]).callMethod('catch', [
                 (error) {
               print('Error: $error');
             }
           ]);
+          print("BHEN");
+          print(pKey);
 
           if(pKey != null && pKey.isNotEmpty){
             // String uid = FirebaseAuth.instance.currentUser!.uid;
@@ -57,11 +60,10 @@ class _ConnectScreenState extends State<ConnectScreen> {
             // }, SetOptions(merge: true));
             // LocalData().saveToLocalStorage('primaryKey', pKey);
             // LocalData().saveToLocalStorage('uid', uid);
-            Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey, role: 'contractor',)));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey,)));
           }
         } else {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey, role: 'contractor')));
-
+          Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(pKey: pKey)));
           // If it's not a Promise-like object, assume it's the result directly
           print('User active public key is: ${connectResult['message'][0]}');
         }

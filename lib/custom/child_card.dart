@@ -41,7 +41,9 @@ class _ChildCardState extends State<ChildCard> {
 
       print("HIIIII");
       print("SECRETTTT : ${LocalData().loadStoredValue('childSecretKey')}");
-      var xdr = await CreateAccount(context).createTrust(assetName, widget.parentPublicKey, widget.childSecretKey);
+      print("CHILD PUBLIC: ${widget.childPublicKey}");
+      print("PARENT PUBLIC: ${widget.parentPublicKey}");
+      var xdr = await CreateAccount(context).createTrust(assetName, widget.parentPublicKey, widget.childPublicKey);
 
       // var xdr = await CreateAccount(context).createTrust("widget.pKey", "SDCQ3Q24EBNBQWVAQNB5J2TSFS7JKAKNK67EHPZIJRXEWIJPP2KJSAHQ");
       // var xdr = "AAAAAgAAAABHiHdg9EIPdBsWBSThTs0X374GO62ekwEtfwnj/jGxWwAAAGQAHZCiAAAAAQAAAAEAAAAAAAAAAAAAAABmtIm/AAAAAAAAAAEAAAAAAAAABgAAAAFHTQAAAAAAAJq7InwKjt5jipNWRwpxF/CrSPRYMGg3ZW8MLMsSUThvAAAAAAX14QAAAAAAAAAAAA==";

@@ -102,22 +102,26 @@ accRouter.post('/mint', async (req, res) =>{
 });
 
 // assetMinter(res, "", "", "");
-async function assetMinter(res, assetName, amount, distributor, recevier) {
+async function assetMinter(res, astName, amo, rec, dis) {
   // console.log("Asda");
-  assetName = Buffer.from(assetName, 'utf8').toString();;
-  amount = Buffer.from(amount, 'utf8').toString();;
-  distributor = Buffer.from(distributor, 'utf8').toString();;
-  recevier = Buffer.from(recevier, 'utf8').toString();;
-
+  assetName = Buffer.from(astName, 'utf8').toString();
+  _amount = Buffer.from(amo, 'utf8').toString();
+  distributor = Buffer.from(dis, 'utf8').toString();
+  recevier = Buffer.from(rec, 'utf8').toString();
+  
+  console.log("Minting...");
   console.log(`ASSET NAME: ${assetName}`);
+  console.log(`Amount: ${_amount}`);
+  console.log(`dis: ${distributor}`);
+  console.log(`rec: ${recevier}`);
 
   try {
       const server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io");
 
-      const account = await server.loadAccount(distributor);//"GA3SXDTF26ERV3ZVPH3NG7AGWX772JZCNEOFFZR2EFEH57LI3XZO7OUF");
-      const asset = new Asset(
+      const account = await server.loadAccount(distributor); //distributor); //"GA3SXDTF26ERV3ZVPH3NG7AGWX772JZCNEOFFZR2EFEH57LI3XZO7OUF");
+      const _asset = new Asset(
           assetName,
-          distributor //"GA3SXDTF26ERV3ZVPH3NG7AGWX772JZCNEOFFZR2EFEH57LI3XZO7OUF"//CHILD ACCOUNT
+          distributor //distributor //"GA3SXDTF26ERV3ZVPH3NG7AGWX772JZCNEOFFZR2EFEH57LI3XZO7OUF"//CHILD ACCOUNT
       );
 
       const transaction = new TransactionBuilder(account, {
@@ -126,12 +130,11 @@ async function assetMinter(res, assetName, amount, distributor, recevier) {
       })
           .addOperation(
               Operation.payment({
-                  destination: recevier, //"GCNLWIT4BKHN4Y4KSNLEOCTRC7YKWSHULAYGQN3FN4GCZSYSKE4G7FTC", //parent account
-                  asset,
-                  amount: amount,
+                  destination: recevier,//recevier, //"GCNLWIT4BKHN4Y4KSNLEOCTRC7YKWSHULAYGQN3FN4GCZSYSKE4G7FTC", //parent account
+                  asset: _asset,
+                  amount: _amount,
               })
-          ).setTimeout(100)
-          .build();
+          )
           // .addOperation(
           //   Operation.manageData({
           //       name: assetName,
@@ -143,7 +146,8 @@ async function assetMinter(res, assetName, amount, distributor, recevier) {
           //       masterWeight: 0,
           //     })
             // )
-            
+            .setTimeout(100)
+          .build();
           console.log(`TRANS ID: ${transaction.toEnvelope().toXDR('base64')}`);
           return res.json({'text' : transaction.toEnvelope().toXDR('base64')});
 
@@ -241,7 +245,7 @@ async function setupRecevier(recevier, distributor, asset_name) {
 
 async function getTrx(res, key){
   console.log("HEOA");
-  var parentKey = Buffer.from(key, 'utf8').toString();;
+  var parentKey = Buffer.from(key, 'utf8').toString();
   try{
     const pair = DiamSdk.Keypair.random();
     console.log(pair);
@@ -250,13 +254,13 @@ async function getTrx(res, key){
     console.log("Child Private key: "+pair.secret());
     var server = new DiamSdk.Horizon.Server("https://diamtestnet.diamcircle.io");
 
-    var parentAccount = await server.loadAccount(key); //make sure the parent account exists on ledger
-    console.log(`parent ${parentAccount}`);
+    var parentAccount = await server.loadAccount(parentKey); //make sure the parent account exists on ledger
+    console.log(`parent ${parentKey}`);
     var createAccountTx = new DiamSdk.TransactionBuilder(parentAccount, {
       fee: DiamSdk.BASE_FEE,
       networkPassphrase: DiamSdk.Networks.TESTNET,
     });
-    console.log("reacj");
+    console.log("reach");
     // console.log("CHILD KEY "+pairPublicKey);
     
     createAccountTx = createAccountTx
@@ -266,7 +270,7 @@ async function getTrx(res, key){
         startingBalance: "5",
       })
     )
-    .setTimeout(0)
+    .setTimeout(180)
     .build();
 
     console.log("reace2");
@@ -290,16 +294,17 @@ async function getTrx(res, key){
   }
 }
 
-async function createTrust(res, assetName, parentPublicKey, childSecret){
+async function createTrust(res, assetName, parentPublicKey, childPublicKey){
 
   var parentAcc = Buffer.from(parentPublicKey, 'utf8').toString();
-  var childAcc = Buffer.from(childSecret, 'utf8').toString();
+  var childAcc = Buffer.from(childPublicKey, 'utf8').toString();
   var assetName = Buffer.from(assetName, 'utf8').toString();
 
   console.log(`ASSET NAME: ${assetName}`);
 
   console.log("Parent Account Public:", parentAcc);
-  console.log("Child Account Secret:", childAcc);
+  console.log("Child Account Public:", childAcc);
+  console.log("Asset:", assetName);
 
 
   try {
@@ -307,15 +312,15 @@ async function createTrust(res, assetName, parentPublicKey, childSecret){
       // var issKey = DiamSdk.Keypair.fromSecret(
       //   parentAcc
       // );
-      var recKey = DiamSdk.Keypair.fromSecret(
-        childAcc //"SAQS6QMXD3WP35E7RL45HMFCUFH7WKXUUJZCCO6KNXXC6UGHAOW6HQFE"
-      );
+      // var recKey = DiamSdk.Keypair.fromSecret(
+      //   "SBGYQBMHVN5BWQ323EPQ4L4YBDT6OKWBONYAS3RN5AUFQT66UGK7QNUM"//childAcc //"SAQS6QMXD3WP35E7RL45HMFCUFH7WKXUUJZCCO6KNXXC6UGHAOW6HQFE"
+      // );
 
-      const account = await server.loadAccount(parentAcc);//"GCNLWIT4BKHN4Y4KSNLEOCTRC7YKWSHULAYGQN3FN4GCZSYSKE4G7FTC");
+      const account = await server.loadAccount(parentAcc);//"GCNLWIT4BKHN4Y4KSNLEOCTRC7YKWSHULAYGQN3FN4GCZSYSKE4G7FTC");//parentAcc);//"GCNLWIT4BKHN4Y4KSNLEOCTRC7YKWSHULAYGQN3FN4GCZSYSKE4G7FTC");
 
       const _asset = new Asset(
           assetName,
-          recKey.publicKey()//"GBLKYDDPI4OMEHDSSCINAQFKA4VWVYB3PVMFCNNSFB6MJKZLERE66BTC", //issuer
+          childAcc//"GD74RVUGGCWYPAISASXZ7B7TGUHLB4BHISTRDEKXC74GHOOWEKGPQRZM"//recKey.publicKey()//"GBLKYDDPI4OMEHDSSCINAQFKA4VWVYB3PVMFCNNSFB6MJKZLERE66BTC", //issuer
       );
 
       const transaction = new TransactionBuilder(account, {
@@ -323,7 +328,7 @@ async function createTrust(res, assetName, parentPublicKey, childSecret){
           networkPassphrase: "Diamante Testnet",
       })
           .addOperation(
-              Operation.changeTrust({ asset: _asset})
+              Operation.changeTrust({ asset: _asset, limit: "5000"})
           )
           .setTimeout(100)
           .build();
@@ -351,15 +356,14 @@ async function createTrust(res, assetName, parentPublicKey, childSecret){
       // }
   } catch (e) {
       console.log(e);
-
   }
 }
 
 accRouter.post('/create-trust', async (req, res) => {
   try{
     console.log("hi");
-    const {assetName, parentPublicKey, childSecretKey} = req.body;
-    await createTrust(res,assetName, parentPublicKey, childSecretKey);
+    const {assetName, parentPublicKey, childPublicKey} = req.body;
+    await createTrust(res,assetName, parentPublicKey, childPublicKey);
   }catch(e){
     console.log(e);
   }
